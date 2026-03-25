@@ -52,3 +52,14 @@ export const shiftApi = {
   exportCsv: (weekStart) =>
     window.open(`${BASE}/shifts/export?weekStart=${weekStart}`, '_blank'),
 }
+
+// ── Scheduler ────────────────────────────────────────────────────────────
+/**
+ * POST /api/scheduler/generate?weekStart=YYYY-MM-DD
+ * Returns { shifts: [...], uncoveredBlocks: ["MONDAY:09:00", ...] }
+ */
+export const schedulerApi = {
+  generate: (weekStart) =>
+    fetch(`${BASE}/scheduler/generate?weekStart=${weekStart}`, { method: 'POST' })
+      .then(r => r.json()),
+}

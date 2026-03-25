@@ -22,4 +22,9 @@ public interface ShiftRepository extends JpaRepository<Shift, Long> {
     @Transactional
     @Query("DELETE FROM Shift s WHERE s.employee.id = :employeeId")
     void deleteByEmployeeId(@Param("employeeId") Long employeeId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Shift s WHERE s.weekStart = :weekStart")
+    void deleteByWeekStart(@Param("weekStart") LocalDate weekStart);
 }

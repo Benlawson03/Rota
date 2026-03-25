@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { format, startOfWeek, addWeeks, subWeeks, addDays } from 'date-fns'
-import { employeeApi, shiftApi } from './api.js'
-import RotaGrid       from './components/RotaGrid.jsx'
+import { employeeApi, shiftApi, schedulerApi } from './api.js'
+import RotaGrid        from './components/RotaGrid.jsx'
 import EmployeeSidebar from './components/EmployeeSidebar.jsx'
-import ShiftModal     from './components/ShiftModal.jsx'
-import HoursSummary   from './components/HoursSummary.jsx'
+import ShiftModal      from './components/ShiftModal.jsx'
+import HoursSummary    from './components/HoursSummary.jsx'
 import { computeUncoveredBlocks } from './utils/coverage.js'
 
 function getWeekStart(date) {
-  return startOfWeek(date, { weekStartsOn: 1 }) // ISO week: Monday
+  return startOfWeek(date, { weekStartsOn: 1 }) // ISO Monday
 }
 
 function fmt(date) {
@@ -16,10 +16,12 @@ function fmt(date) {
 }
 
 export default function App() {
-  const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()))
-  const [employees, setEmployees] = useState([])
-  const [shifts,    setShifts]    = useState([])
-  const [loading,   setLoading]   = useState(true)
+  const [weekStart,    setWeekStart]    = useState(() => getWeekStart(new Date()))
+  const [employees,    setEmployees]    = useState([])
+  const [shifts,       setShifts]       = useState([])
+  const [loading,      setLoading]      = useState(true)
+  const [scheduling,   setScheduling]   = useState(false)
+  const [scheduleMsg,  setScheduleMsg]  = useState(null) // { type: 'ok'|'warn', text }
   // modal: null | { mode:'add', employee, day } | { mode:'edit', shift }
   const [modal, setModal] = useState(null)
 
@@ -43,20 +45,19 @@ export default function App() {
 
   const uncoveredBlocks = computeUncoveredBlocks(shifts)
 
-  // ── Week navigation ────────────────────────────────────────────────────
+  // ── Week nav ───────────────────────────────────────────────────────────
   const prevWeek = () => setWeekStart(w => subWeeks(w, 1))
   const nextWeek = () => setWeekStart(w => addWeeks(w, 1))
   const goToday  = () => setWeekStart(getWeekStart(new Date()))
 
-  // ── Modal helpers ──────────────────────────────────────────────────────
-  const openAdd  = (employee, day) => setModal({ mode: 'add', employee, day })
-  const openEdit = (shift)         => setModal({ mode: 'edit', shift })
-  const closeModal = ()            => setModal(null)
+  // ── Modal ──────────────────────────────────────────────────────────────
+  const openAdd    = (employee, day) => setModal({ mode: 'add', employee, day })
+  const openEdit   = (shift)         => setModal({ mode: 'edit', shift })
+  const closeModal = ()              => setModal(null)
 
   const onShiftSaved = async () => {
     closeModal()
-    const shfts = await shiftApi.getByWeek(weekStartStr)
-    setShifts(shfts)
+    setShifts(await shiftApi.getByWeek(weekStartStr))
   }
 
   const onEmployeesChanged = async () => {
@@ -68,15 +69,40 @@ export default function App() {
     setShifts(shfts)
   }
 
+  // ── Auto-scheduler ─────────────────────────────────────────────────────
+  const handleAutoSchedule = async () => {
+    if (!window.confirm(
+      `Auto-schedule will replace ALL shifts for the week of ${weekStartStr}. Continue?`
+    )) return
+
+    setScheduling(true)
+    setScheduleMsg(null)
+    try {
+      const result = await schedulerApi.generate(weekStartStr)
+      setShifts(result.shifts ?? [])
+      const gaps = result.uncoveredBlocks?.length ?? 0
+      setScheduleMsg(
+        gaps === 0
+          ? { type: 'ok',   text: `Schedule generated — full coverage achieved.` }
+          : { type: 'warn', text: `Schedule generated with ${gaps} uncovered block${gaps !== 1 ? 's' : ''} — see coverage panel.` }
+      )
+      // Clear message after 6 s
+      setTimeout(() => setScheduleMsg(null), 6000)
+    } catch {
+      setScheduleMsg({ type: 'err', text: 'Auto-schedule failed — is the backend running?' })
+    } finally {
+      setScheduling(false)
+    }
+  }
+
   // ── Week label ─────────────────────────────────────────────────────────
   const weekEnd   = addDays(weekStart, 6)
   const weekLabel = `${format(weekStart, 'EEE d MMM')} – ${format(weekEnd, 'EEE d MMM yyyy')}`
-
-  const gapCount = uncoveredBlocks.size
+  const gapCount  = uncoveredBlocks.size
 
   return (
     <div className="app">
-      {/* ── Header ─────────────────────────────────────────────────────── */}
+      {/* ── Header ───────────────────────────────────────────────────── */}
       <header className="app-header">
         <div className="app-title">
           <h1>Rota Manager</h1>
@@ -95,6 +121,13 @@ export default function App() {
             <span className="gap-pill">{gapCount} coverage gap{gapCount !== 1 ? 's' : ''}</span>
           )}
           <button
+            className={`btn btn-scheduler${scheduling ? ' btn--loading' : ''}`}
+            onClick={handleAutoSchedule}
+            disabled={scheduling}
+          >
+            {scheduling ? 'Scheduling…' : '⚙ Auto-Schedule'}
+          </button>
+          <button
             className="btn btn-export"
             onClick={() => shiftApi.exportCsv(weekStartStr)}
           >
@@ -103,7 +136,14 @@ export default function App() {
         </div>
       </header>
 
-      {/* ── Body ───────────────────────────────────────────────────────── */}
+      {/* ── Schedule flash message ────────────────────────────────────── */}
+      {scheduleMsg && (
+        <div className={`schedule-msg schedule-msg--${scheduleMsg.type}`}>
+          {scheduleMsg.text}
+        </div>
+      )}
+
+      {/* ── Body ─────────────────────────────────────────────────────── */}
       <div className="app-body">
         <EmployeeSidebar employees={employees} onChanged={onEmployeesChanged} />
 
@@ -129,7 +169,7 @@ export default function App() {
         </main>
       </div>
 
-      {/* ── Shift Modal ─────────────────────────────────────────────────── */}
+      {/* ── Shift modal ───────────────────────────────────────────────── */}
       {modal && (
         <ShiftModal
           mode={modal.mode}
