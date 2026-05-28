@@ -39,6 +39,17 @@ public class SchedulerService {
         OPENING.put("SUNDAY",    new int[]{7*60+30,   20*60});
     }
 
+    // Outdoor pool: staff required 10:30–19:00 every day it's open.
+    // During this window an extra lifeguard (pool-side) is needed,
+    // raising the total lifeguard requirement from 2 → 3.
+    private static final int OUTDOOR_POOL_OPEN  = 10 * 60 + 30;  // 10:30
+    private static final int OUTDOOR_POOL_CLOSE = 19 * 60;        // 19:00
+
+    /** Returns the number of lifeguards required for a given 30-min block start. */
+    private int requiredLifeguards(int blockStart) {
+        return (blockStart >= OUTDOOR_POOL_OPEN && blockStart < OUTDOOR_POOL_CLOSE) ? 3 : 2;
+    }
+
     private static final String[] ALL_DAYS =
         {"MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"};
 
@@ -168,9 +179,10 @@ public class SchedulerService {
                     else if ("FEMALE".equals(s.getEmployee().getGender())) female++;
                 }
 
-                // Lifeguards count toward housekeeper coverage
+                // Lifeguards count toward housekeeper coverage.
+                // During outdoor pool hours (10:30–19:00) an extra lifeguard is required.
                 boolean covered = recep >= 1 && gym >= 1 && mgr >= 1
-                        && lg >= 2
+                        && lg >= requiredLifeguards(t)
                         && (hk + lg) >= 1   // lifeguard satisfies housekeeper slot
                         && male >= 1 && female >= 1;
 

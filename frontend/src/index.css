@@ -289,7 +289,8 @@ body {
 }
 .day-name  { font-size: 13px; font-weight: 700; }
 .day-date  { font-size: 11px; color: var(--text-muted); }
-.day-hours { font-size: 10px; color: var(--text-dim); }
+.day-hours  { font-size: 10px; color: var(--text-dim); }
+.pool-hours { font-size: 9px;  color: #38bdf8; opacity: 0.8; }
 
 .gap-badge {
   background: var(--danger); color: #fff;

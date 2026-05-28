@@ -69,6 +69,7 @@ public class EmployeeController {
         emp.setGender(req.gender());
         emp.setColour(req.colour());
         emp.setContractedHours(req.contractedHours());
+        emp.setMaxContractedHours(req.maxContractedHours());
 
         // Replace collection contents in-place so JPA tracks the changes
         emp.getQualifications().clear();
@@ -103,6 +104,7 @@ public class EmployeeController {
             String      gender,
             String      colour,
             int         contractedHours,
+            Integer     maxContractedHours,   // null = fixed contract
             Set<String> qualifications,
             Set<String> availability
     ) {}

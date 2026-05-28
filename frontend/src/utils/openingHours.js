@@ -1,3 +1,8 @@
+// ── Outdoor pool staff hours (all days) ──────────────────────────────────
+// Public opening: 11:00–18:30.  Staff required: 10:30–19:00.
+// During this window the lifeguard requirement increases from 2 → 3.
+export const OUTDOOR_POOL_STAFF = { open: '10:30', close: '19:00' }
+
 // ── Opening hours per day ─────────────────────────────────────────────────
 export const OPENING_HOURS = {
   MONDAY:    { open: '06:00', close: '21:30' },

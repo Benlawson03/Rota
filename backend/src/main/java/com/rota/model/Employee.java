@@ -27,9 +27,16 @@ public class Employee {
     @Column(nullable = false)
     private String colour;
 
-    /** Weekly contracted hours — hard cap enforced by the auto-scheduler */
+    /** Minimum weekly contracted hours — scheduler targets this. */
     @Column(name = "contracted_hours", nullable = false)
     private int contractedHours;
+
+    /**
+     * Maximum weekly contracted hours for variable-contract staff (e.g. 32–40).
+     * NULL means fixed contract (contractedHours is both min and max).
+     */
+    @Column(name = "max_contracted_hours")
+    private Integer maxContractedHours;
 
     /**
      * Activity qualifications. Only MANAGER and LIFEGUARD may hold these.
@@ -74,8 +81,11 @@ public class Employee {
     public String  getColour()                    { return colour; }
     public void    setColour(String c)            { this.colour = c; }
 
-    public int     getContractedHours()           { return contractedHours; }
-    public void    setContractedHours(int h)      { this.contractedHours = h; }
+    public int     getContractedHours()                    { return contractedHours; }
+    public void    setContractedHours(int h)               { this.contractedHours = h; }
+
+    public Integer getMaxContractedHours()                 { return maxContractedHours; }
+    public void    setMaxContractedHours(Integer h)        { this.maxContractedHours = h; }
 
     public Set<String> getQualifications()        { return qualifications; }
     public void    setQualifications(Set<String> q){ this.qualifications = q; }

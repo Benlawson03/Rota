@@ -9,16 +9,17 @@ DROP TABLE IF EXISTS employees;
 
 -- ── employees ────────────────────────────────────────────────────────────
 CREATE TABLE employees (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name             VARCHAR(100) NOT NULL,
-    role             VARCHAR(20)  NOT NULL,  -- RECEPTIONIST | GYM | MANAGER | LIFEGUARD | HOUSEKEEPER
-    gender           VARCHAR(6)   NOT NULL,  -- MALE | FEMALE
-    colour           VARCHAR(7)   NOT NULL,  -- CSS hex, e.g. '#3B82F6'
-    contracted_hours INT          NOT NULL   -- weekly contracted hours (hard cap)
+    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name                 VARCHAR(100) NOT NULL,
+    role                 VARCHAR(20)  NOT NULL,  -- RECEPTIONIST | GYM | MANAGER | LIFEGUARD | HOUSEKEEPER | BEAUTY
+    gender               VARCHAR(6)   NOT NULL,  -- MALE | FEMALE
+    colour               VARCHAR(7)   NOT NULL,  -- CSS hex, e.g. '#3B82F6'
+    contracted_hours     INT          NOT NULL,  -- minimum weekly contracted hours
+    max_contracted_hours INT                     -- NULL = fixed; set for variable contracts e.g. 32-40
 );
 
--- ── employee_qualifications (only MANAGER and LIFEGUARD can have these) ──
--- RIFLES | ARCHERY | AXE_THROWING
+-- ── employee_qualifications (MANAGER and LIFEGUARD only) ─────────────────
+-- RIFLES | ARCHERY | AXE_THROWING | BOATS
 CREATE TABLE employee_qualifications (
     employee_id   BIGINT      NOT NULL,
     qualification VARCHAR(20) NOT NULL,

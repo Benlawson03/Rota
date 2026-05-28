@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { employeeApi } from '../api.js'
 
-const ROLES         = ['RECEPTIONIST', 'GYM', 'MANAGER', 'LIFEGUARD', 'HOUSEKEEPER']
+const ROLES         = ['RECEPTIONIST', 'GYM', 'MANAGER', 'LIFEGUARD', 'HOUSEKEEPER', 'BEAUTY']
 const GENDERS       = ['MALE', 'FEMALE']
 const ALL_DAYS      = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY']
 const DAY_SHORT     = { MONDAY:'Mon', TUESDAY:'Tue', WEDNESDAY:'Wed', THURSDAY:'Thu',
                         FRIDAY:'Fri', SATURDAY:'Sat', SUNDAY:'Sun' }
-const QUALIFICATIONS = ['RIFLES', 'ARCHERY', 'AXE_THROWING']
+const QUALIFICATIONS = ['RIFLES', 'ARCHERY', 'AXE_THROWING', 'BOATS']
 const QUAL_ROLES    = ['MANAGER', 'LIFEGUARD']   // only these roles may have qualifications
 
 const PRESET_COLOURS = [
@@ -18,13 +18,14 @@ const PRESET_COLOURS = [
 // ── Employee form ─────────────────────────────────────────────────────────
 
 function EmployeeForm({ initial, onSave, onCancel }) {
-  const [name,             setName]             = useState(initial?.name            ?? '')
-  const [role,             setRole]             = useState(initial?.role            ?? ROLES[0])
-  const [gender,           setGender]           = useState(initial?.gender          ?? 'MALE')
-  const [colour,           setColour]           = useState(initial?.colour          ?? PRESET_COLOURS[0])
-  const [contractedHours,  setContractedHours]  = useState(initial?.contractedHours ?? 37)
-  const [qualifications,   setQualifications]   = useState(new Set(initial?.qualifications ?? []))
-  const [availability,     setAvailability]     = useState(new Set(initial?.availability   ?? ALL_DAYS))
+  const [name,               setName]               = useState(initial?.name               ?? '')
+  const [role,               setRole]               = useState(initial?.role               ?? ROLES[0])
+  const [gender,             setGender]             = useState(initial?.gender             ?? 'MALE')
+  const [colour,             setColour]             = useState(initial?.colour             ?? PRESET_COLOURS[0])
+  const [contractedHours,    setContractedHours]    = useState(initial?.contractedHours    ?? 37)
+  const [maxContractedHours, setMaxContractedHours] = useState(initial?.maxContractedHours ?? '')
+  const [qualifications,     setQualifications]     = useState(new Set(initial?.qualifications ?? []))
+  const [availability,       setAvailability]       = useState(new Set(initial?.availability   ?? ALL_DAYS))
 
   const toggleQual = (q) => {
     setQualifications(prev => {
@@ -50,10 +51,10 @@ function EmployeeForm({ initial, onSave, onCancel }) {
       role,
       gender,
       colour,
-      contractedHours: Number(contractedHours),
-      // clear qualifications if role doesn't allow them
-      qualifications: QUAL_ROLES.includes(role) ? [...qualifications] : [],
-      availability:   [...availability],
+      contractedHours:    Number(contractedHours),
+      maxContractedHours: maxContractedHours !== '' ? Number(maxContractedHours) : null,
+      qualifications:     QUAL_ROLES.includes(role) ? [...qualifications] : [],
+      availability:       [...availability],
     })
   }
 
@@ -97,15 +98,28 @@ function EmployeeForm({ initial, onSave, onCancel }) {
       </div>
 
       {/* Contracted hours */}
-      <div className="field">
-        <label className="field-label">Contracted hours / week</label>
-        <input
-          className="input"
-          type="number"
-          min={1} max={168} step={0.5}
-          value={contractedHours}
-          onChange={e => setContractedHours(e.target.value)}
-        />
+      <div className="form-row">
+        <div className="field">
+          <label className="field-label">Min hrs / week</label>
+          <input
+            className="input"
+            type="number"
+            min={1} max={168} step={0.5}
+            value={contractedHours}
+            onChange={e => setContractedHours(e.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label className="field-label">Max hrs <span className="optional">(variable)</span></label>
+          <input
+            className="input"
+            type="number"
+            min={1} max={168} step={0.5}
+            placeholder="Same as min"
+            value={maxContractedHours}
+            onChange={e => setMaxContractedHours(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Colour */}
@@ -232,7 +246,9 @@ export default function EmployeeSidebar({ employees, onChanged }) {
                     <span className={`gender-badge gender-badge--${emp.gender?.toLowerCase()}`}>
                       {emp.gender === 'MALE' ? '♂' : '♀'}
                     </span>
-                    <span className="hours-badge">{emp.contractedHours}h</span>
+                    <span className="hours-badge">
+                      {emp.contractedHours}{emp.maxContractedHours ? `–${emp.maxContractedHours}` : ''}h
+                    </span>
                   </div>
                   {emp.qualifications?.length > 0 && (
                     <div className="qual-tags">

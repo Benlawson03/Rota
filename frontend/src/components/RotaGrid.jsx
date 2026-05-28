@@ -1,5 +1,5 @@
 import { format, addDays } from 'date-fns'
-import { DAYS, DAY_LABELS, OPENING_HOURS } from '../utils/openingHours.js'
+import { DAYS, DAY_LABELS, OPENING_HOURS, OUTDOOR_POOL_STAFF } from '../utils/openingHours.js'
 import { getMissingRoles } from '../utils/coverage.js'
 
 export default function RotaGrid({
@@ -36,6 +36,7 @@ export default function RotaGrid({
                       <span className="day-name">{DAY_LABELS[day]}</span>
                       <span className="day-date">{format(date, 'd MMM')}</span>
                       <span className="day-hours">{hours.open}–{hours.close}</span>
+                    <span className="pool-hours" title="Outdoor pool staff: 10:30–19:00">🏊 {OUTDOOR_POOL_STAFF.open}–{OUTDOOR_POOL_STAFF.close}</span>
                       {hasGaps && (
                         <span
                           className="gap-badge"

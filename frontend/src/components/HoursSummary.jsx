@@ -30,12 +30,15 @@ export default function HoursSummary({ employees, shifts }) {
         </div>
 
         {employees.map(emp => {
-          const contracted = emp.contractedHours
+          const minHours   = emp.contractedHours
+          const maxHours   = emp.maxContractedHours ?? minHours
           const scheduled  = scheduledHours(shifts, emp.id)
-          const diff       = +(scheduled - contracted).toFixed(1)
-          const exact      = diff === 0
-          const pct        = contracted > 0
-            ? Math.min((scheduled / contracted) * 100, 130)
+          const diff       = +(scheduled - minHours).toFixed(1)
+          // OK = at or between min and max contracted hours
+          const ok         = scheduled >= minHours && scheduled <= maxHours
+          const contractStr = maxHours > minHours ? `${minHours}–${maxHours}h` : `${minHours}h`
+          const pct        = maxHours > 0
+            ? Math.min((scheduled / maxHours) * 100, 130)
             : 0
 
           return (
@@ -47,23 +50,22 @@ export default function HoursSummary({ employees, shifts }) {
 
               <span className="hours-role">{emp.role}</span>
 
-              <span className="num">{contracted}h</span>
+              <span className="num">{contractStr}</span>
 
               <span className="num">{scheduled.toFixed(1)}h</span>
 
-              <span className={`num diff-val${exact ? '' : ' diff-val--bad'}`}>
-                {diff === 0 ? '✓' : (diff > 0 ? `+${diff}h` : `${diff}h`)}
+              <span className={`num diff-val${ok ? '' : ' diff-val--bad'}`}>
+                {ok ? '✓' : (diff > 0 ? `+${diff}h` : `${diff}h`)}
               </span>
 
               <div className="bar-col">
                 <div className="hours-bar-track">
                   <div
-                    className={`hours-bar-fill${exact ? '' : ' hours-bar-fill--over'}`}
+                    className="hours-bar-fill"
                     style={{ width: `${Math.min(pct, 100)}%`, background: emp.colour }}
                   />
-                  {/* Red overflow indicator */}
                   {pct > 100 && (
-                    <div className="hours-bar-overflow" style={{ width: `${pct - 100}%` }} />
+                    <div className="hours-bar-overflow" style={{ width: `${Math.min(pct - 100, 30)}%` }} />
                   )}
                 </div>
               </div>
